@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Neon Quiz - Player</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#f8acff",
+                        "surface-container-highest": "#333535",
+                        "tertiary-fixed": "#e3dfff",
+                        "primary-fixed": "#e9ddff",
+                        "primary-fixed-dim": "#cfbcff",
+                        "surface-variant": "#333535",
+                        "inverse-on-surface": "#2f3131",
+                        "on-surface-variant": "#cbc3d8",
+                        "surface-container-low": "#1a1c1c",
+                        "surface-container": "#1e2020",
+                        "on-error": "#690005",
+                        "on-tertiary-fixed-variant": "#45445f",
+                        "secondary-container": "#e249ff",
+                        "surface-container-lowest": "#0c0f0f",
+                        "primary": "#cfbcff",
+                        "on-background": "#e2e2e2",
+                        "tertiary-fixed-dim": "#c6c3e4",
+                        "secondary-fixed-dim": "#f8acff",
+                        "on-secondary": "#570067",
+                        "on-tertiary": "#2f2e47",
+                        "on-tertiary-container": "#dcd9fa",
+                        "on-surface": "#e2e2e2",
+                        "outline-variant": "#494456",
+                        "inverse-primary": "#6e2ded",
+                        "on-primary": "#3b0092",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed": "#1a1931",
+                        "outline": "#958da2",
+                        "on-primary-fixed-variant": "#5500cb",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#350040",
+                        "surface-tint": "#cfbcff",
+                        "on-primary-container": "#e3d6ff",
+                        "primary-container": "#7030ef",
+                        "tertiary-container": "#5f5e7a",
+                        "inverse-surface": "#e2e2e2",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#121414",
+                        "secondary-fixed": "#ffd5ff",
+                        "on-secondary-fixed-variant": "#7b0091",
+                        "surface-bright": "#37393a",
+                        "background": "#121414",
+                        "tertiary": "#c6c3e4",
+                        "on-primary-fixed": "#22005c",
+                        "on-secondary-container": "#4c005a",
+                        "surface-dim": "#121414",
+                        "surface-container-high": "#282a2b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "unit": "8px",
+                        "container-padding": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Space Grotesk"],
+                        "headline-xl": ["Space Grotesk"],
+                        "headline-lg": ["Space Grotesk"],
+                        "body-lg": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "label-md": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "headline-xl": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #090820;
+            overflow-x: hidden;
+        }
+        .bg-glow-1 {
+            position: absolute;
+            top: -10%;
+            left: -10%;
+            width: 50vw;
+            height: 50vw;
+            background: radial-gradient(circle, rgba(112, 48, 239, 0.15) 0%, rgba(9, 8, 32, 0) 70%);
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(60px);
+        }
+        .bg-glow-2 {
+            position: absolute;
+            bottom: -10%;
+            right: -10%;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, rgba(219, 31, 255, 0.1) 0%, rgba(9, 8, 32, 0) 70%);
+            border-radius: 50%;
+            z-index: -1;
+            filter: blur(80px);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .neon-button {
+            background: linear-gradient(90deg, #7030EF 0%, #DB1FFF 100%);
+            box-shadow: 0 0 20px rgba(219, 31, 255, 0.4);
+            border: none;
+        }
+        .option-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.2s ease-in-out;
+        }
+        .option-card:hover {
+            border-color: rgba(219, 31, 255, 0.5);
+            box-shadow: inset 0 0 15px rgba(219, 31, 255, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+        .option-card.selected {
+            border-color: #DB1FFF;
+            box-shadow: 0 0 20px rgba(219, 31, 255, 0.3), inset 0 0 15px rgba(219, 31, 255, 0.2);
+            background: rgba(219, 31, 255, 0.1);
+        }
+        .progress-track {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .progress-fill {
+            background: #DB1FFF;
+            position: relative;
+        }
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 10px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px white;
+        }
+        .pulse-timer {
+            text-shadow: 0 0 10px rgba(219, 31, 255, 0.8), 0 0 20px rgba(219, 31, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="text-on-background min-h-screen flex flex-col relative">
+<!-- Background Elements -->
+<div class="bg-glow-1"></div>
+<div class="bg-glow-2"></div>
+<!-- Top Bar: Timer and Progress -->
+<header class="w-full px-container-padding py-stack-md flex flex-col gap-stack-sm z-10 glass-card border-t-0 border-l-0 border-r-0 border-b border-white/10 sticky top-0">
+<div class="flex justify-between items-center w-full max-w-5xl mx-auto">
+<div class="flex items-center gap-unit">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="font-headline-lg text-headline-lg text-white pulse-timer">00:14</span>
+</div>
+<div class="flex items-center gap-unit">
+<span class="font-label-md text-label-md text-tertiary uppercase tracking-wider">Question 4 / 10</span>
+<button class="ml-4 p-2 rounded-full hover:bg-white/10 transition-colors text-outline">
+<span class="material-symbols-outlined">pause</span>
+</button>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="w-full max-w-5xl mx-auto h-2 rounded-full progress-track mt-2 overflow-hidden">
+<div class="h-full progress-fill rounded-full" style="width: 40%;"></div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-grow flex items-center justify-center p-container-padding z-10">
+<div class="w-full max-w-3xl flex flex-col gap-stack-lg">
+<!-- Question Card -->
+<div class="glass-card rounded-xl p-stack-lg relative overflow-hidden flex flex-col items-center text-center">
+<!-- AI Thinking Glow Effect behind text -->
+<div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary-container/20 via-transparent to-transparent opacity-50 pointer-events-none"></div>
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary-container bg-primary-container/5 mb-stack-md">
+<span class="material-symbols-outlined text-primary-container text-sm">psychology</span>
+<span class="font-label-md text-label-md text-primary-fixed uppercase text-xs">Computer Science</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-white mb-stack-md relative z-10">
+                    What is the time complexity of searching for an element in a balanced binary search tree?
+                </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl relative z-10">
+                    Consider the worst-case scenario for a self-balancing tree like an AVL or Red-Black tree.
+                </p>
+</div>
+<!-- Options Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-stack-md">
+<!-- Option A -->
+<button class="option-card rounded-lg p-stack-md flex items-center gap-stack-md text-left group">
+<div class="w-10 h-10 rounded-full flex items-center justify-center border border-white/20 text-white font-headline-md text-headline-md group-hover:border-secondary transition-colors">
+                        A
+                    </div>
+<span class="font-body-lg text-body-lg text-white flex-grow">O(1)</span>
+</button>
+<!-- Option B -->
+<button class="option-card rounded-lg p-stack-md flex items-center gap-stack-md text-left group">
+<div class="w-10 h-10 rounded-full flex items-center justify-center border border-white/20 text-white font-headline-md text-headline-md group-hover:border-secondary transition-colors">
+                        B
+                    </div>
+<span class="font-body-lg text-body-lg text-white flex-grow">O(n)</span>
+</button>
+<!-- Option C (Selected State example for visual context, though typically requires JS) -->
+<button class="option-card selected rounded-lg p-stack-md flex items-center gap-stack-md text-left">
+<div class="w-10 h-10 rounded-full flex items-center justify-center border border-secondary text-secondary font-headline-md text-headline-md bg-secondary/10">
+                        C
+                    </div>
+<span class="font-body-lg text-body-lg text-white font-medium flex-grow">O(log n)</span>
+</button>
+<!-- Option D -->
+<button class="option-card rounded-lg p-stack-md flex items-center gap-stack-md text-left group">
+<div class="w-10 h-10 rounded-full flex items-center justify-center border border-white/20 text-white font-headline-md text-headline-md group-hover:border-secondary transition-colors">
+                        D
+                    </div>
+<span class="font-body-lg text-body-lg text-white flex-grow">O(n log n)</span>
+</button>
+</div>
+<!-- Action Area (Confirm) -->
+<div class="flex justify-center mt-stack-sm">
+<button class="neon-button px-8 py-4 rounded-full flex items-center gap-2 group hover:scale-105 transition-transform">
+<span class="font-headline-md text-headline-md text-white">Lock Answer</span>
+<span class="material-symbols-outlined text-white group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Contextual Footer Helpers -->
+<footer class="w-full p-container-padding flex justify-between items-center text-on-surface-variant/50 font-label-md text-label-md z-10">
+<button class="flex items-center gap-1 hover:text-white transition-colors">
+<span class="material-symbols-outlined text-sm">flag</span>
+            Report Issue
+        </button>
+<span>500 pts potential</span>
+</footer>
+</body></html>

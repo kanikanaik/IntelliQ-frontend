@@ -1,0 +1,242 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Neon Quiz - Create Quiz</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800;900&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#f8acff",
+                        "surface-container-highest": "#333535",
+                        "tertiary-fixed": "#e3dfff",
+                        "primary-fixed": "#e9ddff",
+                        "primary-fixed-dim": "#cfbcff",
+                        "surface-variant": "#333535",
+                        "inverse-on-surface": "#2f3131",
+                        "on-surface-variant": "#cbc3d8",
+                        "surface-container-low": "#1a1c1c",
+                        "surface-container": "#1e2020",
+                        "on-error": "#690005",
+                        "on-tertiary-fixed-variant": "#45445f",
+                        "secondary-container": "#e249ff",
+                        "surface-container-lowest": "#0c0f0f",
+                        "primary": "#cfbcff",
+                        "on-background": "#e2e2e2",
+                        "tertiary-fixed-dim": "#c6c3e4",
+                        "secondary-fixed-dim": "#f8acff",
+                        "on-secondary": "#570067",
+                        "on-tertiary": "#2f2e47",
+                        "on-tertiary-container": "#dcd9fa",
+                        "on-surface": "#e2e2e2",
+                        "outline-variant": "#494456",
+                        "inverse-primary": "#6e2ded",
+                        "on-primary": "#3b0092",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed": "#1a1931",
+                        "outline": "#958da2",
+                        "on-primary-fixed-variant": "#5500cb",
+                        "error": "#ffb4ab",
+                        "on-secondary-fixed": "#350040",
+                        "surface-tint": "#cfbcff",
+                        "on-primary-container": "#e3d6ff",
+                        "primary-container": "#7030ef",
+                        "tertiary-container": "#5f5e7a",
+                        "inverse-surface": "#e2e2e2",
+                        "on-error-container": "#ffdad6",
+                        "surface": "#121414",
+                        "secondary-fixed": "#ffd5ff",
+                        "on-secondary-fixed-variant": "#7b0091",
+                        "surface-bright": "#37393a",
+                        "background": "#121414",
+                        "tertiary": "#c6c3e4",
+                        "on-primary-fixed": "#22005c",
+                        "on-secondary-container": "#4c005a",
+                        "surface-dim": "#121414",
+                        "surface-container-high": "#282a2b"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "8px",
+                        "stack-lg": "32px",
+                        "stack-md": "16px",
+                        "unit": "8px",
+                        "container-padding": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-md": ["Space Grotesk"],
+                        "headline-xl": ["Space Grotesk"],
+                        "headline-lg": ["Space Grotesk"],
+                        "body-lg": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "label-md": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "headline-xl": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .neon-glow {
+            box-shadow: 0 0 20px rgba(219, 31, 255, 0.25);
+        }
+        .btn-neon {
+            background: linear-gradient(135deg, #7030EF, #DB1FFF);
+            box-shadow: 0 4px 15px rgba(219, 31, 255, 0.4);
+            border: none;
+            color: white;
+        }
+        .btn-neon:hover {
+            box-shadow: 0 6px 20px rgba(219, 31, 255, 0.6);
+        }
+        .drop-zone {
+            border: 2px dashed rgba(219, 31, 255, 0.5);
+            background: rgba(219, 31, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+        .drop-zone:hover {
+            border-color: #DB1FFF;
+            background: rgba(219, 31, 255, 0.1);
+            box-shadow: inset 0 0 20px rgba(219, 31, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md relative overflow-x-hidden">
+<!-- Ambient Background Orbs -->
+<div class="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary-container/20 blur-[120px] pointer-events-none z-0"></div>
+<div class="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-[#DB1FFF]/10 blur-[100px] pointer-events-none z-0"></div>
+<!-- Navigation Suppressed for Linear/Transactional Flow (Wizard) -->
+<header class="w-full flex justify-between items-center px-8 h-16 border-b border-white/10 z-10 glass-card fixed top-0">
+<div class="text-2xl font-black text-white drop-shadow-[0_0_15px_#7030EF] font-headline-md tracking-wider" style="">IntelliQ</div>
+<button class="text-on-surface-variant hover:text-white transition-colors flex items-center gap-2 font-label-md text-label-md" style="">
+<span class="material-symbols-outlined" data-icon="close" style="">close</span>
+            Exit Creator
+        </button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-24 pb-32 px-4 md:px-8 max-w-5xl mx-auto w-full z-10 relative">
+<!-- Wizard Header & Progress -->
+<div class="mb-stack-lg">
+<h1 class="font-headline-lg text-headline-lg text-white mb-stack-sm drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" style="">Create New Quiz</h1>
+<p class="font-body-md text-body-md text-on-surface-variant" style="">Provide the source material for the AI to generate questions.</p>
+</div>
+<!-- Progress Tracker -->
+<div class="glass-card rounded-xl p-6 mb-stack-lg flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden">
+<!-- Progress Line -->
+<div class="absolute top-1/2 left-[10%] right-[10%] h-1 bg-white/10 -translate-y-1/2 z-0 hidden md:block">
+<div class="h-full w-1/3 bg-gradient-to-r from-primary-container to-[#DB1FFF] relative">
+<div class="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full blur-[2px]"></div>
+</div>
+</div>
+<!-- Steps -->
+<div class="flex flex-col items-center z-10 w-full md:w-auto relative">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white font-bold mb-2 shadow-[0_0_15px_rgba(112,48,239,0.5)]">
+<span class="material-symbols-outlined text-sm" data-icon="check" style="">check</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant" style="">Topic Selection</span>
+</div>
+<div class="flex flex-col items-center z-10 w-full md:w-auto relative">
+<div class="w-12 h-12 rounded-full border-2 border-[#DB1FFF] bg-surface flex items-center justify-center text-[#DB1FFF] font-bold mb-2 neon-glow" style="">
+                    2
+                </div>
+<span class="font-label-md text-label-md text-white drop-shadow-[0_0_5px_rgba(219,31,255,0.8)]" style="">Content Input</span>
+</div>
+<div class="flex flex-col items-center z-10 w-full md:w-auto relative opacity-50">
+<div class="w-10 h-10 rounded-full border border-white/20 bg-surface flex items-center justify-center text-on-surface-variant font-bold mb-2" style="">
+                    3
+                </div>
+<span class="font-label-md text-label-md text-on-surface-variant" style="">AI Settings</span>
+</div>
+<div class="flex flex-col items-center z-10 w-full md:w-auto relative opacity-50">
+<div class="w-10 h-10 rounded-full border border-white/20 bg-surface flex items-center justify-center text-on-surface-variant font-bold mb-2" style="">
+                    4
+                </div>
+<span class="font-label-md text-label-md text-on-surface-variant" style="">Review</span>
+</div>
+</div>
+<!-- Content Input Area (Bento Grid Style) -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Paste Text Column -->
+<div class="lg:col-span-2 glass-card rounded-2xl p-6 flex flex-col">
+<div class="flex justify-between items-center mb-4">
+<h2 class="font-headline-md text-headline-md text-white flex items-center gap-2" style="">
+<span class="material-symbols-outlined text-secondary" data-icon="article" style="">article</span>
+                        Paste Text
+                    </h2>
+<span class="font-label-md text-label-md px-3 py-1 rounded-full border border-primary-container bg-primary-container/10 text-primary-container" style="">
+                        0 / 10,000 words
+                    </span>
+</div>
+<textarea class="w-full flex-grow min-h-[300px] bg-black/20 border border-white/10 rounded-xl p-4 text-on-surface font-body-md focus:border-[#DB1FFF] focus:ring-1 focus:ring-[#DB1FFF] focus:outline-none transition-all resize-y" placeholder="Paste your article, study notes, or raw content here. The AI will extract key concepts to build your quiz..."></textarea>
+<div class="mt-4 flex justify-end">
+<button class="px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-on-surface-variant hover:text-white hover:bg-white/10 transition-colors font-label-md text-label-md flex items-center gap-2" style="">
+<span class="material-symbols-outlined text-sm" data-icon="auto_awesome" style="">auto_awesome</span>
+                        Clean Formatting
+                    </button>
+</div>
+</div>
+<!-- Upload / URL Column -->
+<div class="flex flex-col gap-6">
+<!-- File Upload -->
+<div class="glass-card rounded-2xl p-6 drop-zone flex flex-col items-center justify-center text-center cursor-pointer min-h-[200px]">
+<div class="w-16 h-16 rounded-full bg-[#DB1FFF]/20 flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-3xl text-[#DB1FFF]" data-icon="upload_file" style="">upload_file</span>
+</div>
+<h3 class="font-headline-md text-[20px] text-white mb-2" style="">Upload Document</h3>
+<p class="font-body-md text-[14px] text-on-surface-variant mb-4" style="">PDF, DOCX, or TXT (Max 10MB)</p>
+<button class="px-6 py-2 rounded-full border border-[#DB1FFF]/50 text-[#DB1FFF] hover:bg-[#DB1FFF]/10 transition-colors font-label-md text-label-md" style="">
+                        Browse Files
+                    </button>
+</div>
+<!-- Web URL -->
+<div class="glass-card rounded-2xl p-6">
+<h3 class="font-headline-md text-[20px] text-white mb-4 flex items-center gap-2" style="">
+<span class="material-symbols-outlined text-secondary" data-icon="link" style="">link</span>
+                        Import from URL
+                    </h3>
+<div class="relative">
+<input class="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-on-surface font-body-md focus:border-[#DB1FFF] focus:ring-1 focus:ring-[#DB1FFF] focus:outline-none transition-all placeholder:text-on-surface-variant/50" placeholder="https://example.com/article" type="text">
+<button class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center hover:bg-primary-container/80 transition-colors" style="">
+<span class="material-symbols-outlined text-white text-sm" data-icon="arrow_forward" style="">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Footer -->
+<div class="mt-stack-lg flex justify-between items-center glass-card p-4 rounded-xl border-t border-white/10">
+<button class="px-6 py-3 rounded-lg text-on-surface-variant hover:text-white transition-colors font-label-md text-label-md flex items-center gap-2" style="">
+<span class="material-symbols-outlined text-sm" data-icon="arrow_back" style="">arrow_back</span>
+                Back
+            </button>
+<button class="btn-neon px-8 py-3 rounded-lg font-label-md text-label-md font-bold uppercase tracking-wider flex items-center gap-2" style="">
+                Continue to Settings
+                <span class="material-symbols-outlined text-sm" data-icon="arrow_forward" style="">arrow_forward</span>
+</button>
+</div>
+</main>
+</body></html>
