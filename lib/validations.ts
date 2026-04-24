@@ -42,9 +42,12 @@ export const saveQuestionsSchema = z.object({
 
 export const generateQuestionsSchema = z.object({
   topic: z.string().min(2).max(200),
+  description: z.string().max(1000).optional(),
+  notes: z.string().max(12000).optional(),
+  sourceUrl: z.string().url().max(2000).optional(),
   count: z.number().int().min(1).max(20).default(5),
   type: z.enum(["MCQ", "MULTI_SELECT", "MIXED"]).default("MCQ"),
-  context: z.string().max(10000).optional(), // pasted text / file content
+  context: z.string().max(12000).optional(), // legacy fallback: pasted text / file content
 });
 
 // ─── Attempt / Submit ───────────────────────────────────────────────────────

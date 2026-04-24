@@ -82,6 +82,15 @@ function createDefaultQuestion(order: number): QuestionDraft {
   };
 }
 
+function isValidHttpUrl(value: string) {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function ProgressBar({ currentStep }: { currentStep: number }) {
   return (
     <GlassCard className="relative mb-8 flex flex-col items-center justify-between gap-4 overflow-hidden rounded-xl p-6 md:flex-row">
@@ -190,7 +199,10 @@ export function CreateQuizWizard() {
     setError("");
   }
 
-  function updateQuestionAt(index: number, updater: (q: QuestionDraft) => QuestionDraft) {
+  function updateQuestionAt(
+    index: number,
+    updater: (q: QuestionDraft) => QuestionDraft,
+  ) {
     setQuestions((prev) => prev.map((q, i) => (i === index ? updater(q) : q)));
   }
 
@@ -222,7 +234,10 @@ export function CreateQuizWizard() {
       if (question.options.length >= 6) return question;
       return {
         ...question,
-        options: [...question.options, { id: createId(), text: "", isCorrect: false }],
+        options: [
+          ...question.options,
+          { id: createId(), text: "", isCorrect: false },
+        ],
       };
     });
   }
@@ -230,9 +245,14 @@ export function CreateQuizWizard() {
   function removeOption(questionIndex: number, optionId: string) {
     updateQuestionAt(questionIndex, (question) => {
       if (question.options.length <= 2) return question;
-      let nextOptions = question.options.filter((option) => option.id !== optionId);
+      let nextOptions = question.options.filter(
+        (option) => option.id !== optionId,
+      );
 
-      if (!nextOptions.some((option) => option.isCorrect) && nextOptions.length > 0) {
+      if (
+        !nextOptions.some((option) => option.isCorrect) &&
+        nextOptions.length > 0
+      ) {
         nextOptions = nextOptions.map((option, idx) => ({
           ...option,
           isCorrect: idx === 0,
@@ -263,15 +283,21 @@ export function CreateQuizWizard() {
         .slice(0, 6);
 
       if (options.length < 2) {
-        throw new Error(`Question ${index + 1} needs at least 2 non-empty options`);
+        throw new Error(
+          `Question ${index + 1} needs at least 2 non-empty options`,
+        );
       }
 
       const correctCount = options.filter((option) => option.isCorrect).length;
       if (question.type === "MCQ" && correctCount !== 1) {
-        throw new Error(`Question ${index + 1} (MCQ) must have exactly 1 correct answer`);
+        throw new Error(
+          `Question ${index + 1} (MCQ) must have exactly 1 correct answer`,
+        );
       }
       if (question.type === "MULTI_SELECT" && correctCount < 1) {
-        throw new Error(`Question ${index + 1} needs at least 1 correct answer`);
+        throw new Error(
+          `Question ${index + 1} needs at least 1 correct answer`,
+        );
       }
 
       normalized.push({
@@ -330,6 +356,17 @@ export function CreateQuizWizard() {
 
   async function handleGenerate() {
     if (!quizId) return;
+    const normalizedUrl = urlInput.trim();
+    if (normalizedUrl && !isValidHttpUrl(normalizedUrl)) {
+      setError("Please enter a valid URL starting with http:// or https://");
+      return;
+    }
+
+    const combinedNotes = [pastedText, uploadedText]
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .join("\n\n");
+
     setError("");
     setLoading(true);
     try {
@@ -338,9 +375,12 @@ export function CreateQuizWizard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic: topic.trim() || title.trim(),
+          description: description.trim() || undefined,
+          notes: combinedNotes.slice(0, 10000) || undefined,
+          sourceUrl: normalizedUrl || undefined,
           count: questionCount,
           type: questionType,
-          context: contentContext.slice(0, 5000) || undefined,
+          context: contentContext.slice(0, 12000) || undefined,
         }),
       });
       if (!res.ok) {
@@ -760,12 +800,15 @@ export function CreateQuizWizard() {
                       <select
                         value={q.type}
                         onChange={(e) => {
-                          const nextType = e.target.value as "MCQ" | "MULTI_SELECT";
+                          const nextType = e.target.value as
+                            | "MCQ"
+                            | "MULTI_SELECT";
                           updateQuestionAt(i, (question) => {
                             if (nextType === "MCQ") {
                               const firstCorrect =
-                                question.options.find((option) => option.isCorrect)?.id ??
-                                question.options[0]?.id;
+                                question.options.find(
+                                  (option) => option.isCorrect,
+                                )?.id ?? question.options[0]?.id;
                               return {
                                 ...question,
                                 type: nextType,
@@ -841,7 +884,7 @@ export function CreateQuizWizard() {
                               options: question.options.map((option) =>
                                 option.id === o.id
                                   ? { ...option, text: e.target.value }
-                                  : option
+                                  : option,
                               ),
                             }))
                           }

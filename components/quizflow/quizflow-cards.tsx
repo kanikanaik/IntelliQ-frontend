@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Sparkles, Gamepad2, Users } from "lucide-react";
 import type { HeroOption, TrendingQuiz } from "./quizflow-data";
+import { useSession } from "@/lib/auth-client";
 
 const HERO_ICONS: Record<
   string,
@@ -14,13 +15,25 @@ const HERO_ICONS: Record<
 
 export function HeroOptionCard({ option }: { option: HeroOption }) {
   const router = useRouter();
+  const { data: session } = useSession();
   const isViolet = option.accent === "violet";
   const Icon = HERO_ICONS[option.icon] ?? Sparkles;
+
+  function handleHeroClick() {
+    if (option.title === "Create Quiz") {
+      router.push(
+        session?.user ? "/create-quiz" : "/login?callbackUrl=/create-quiz",
+      );
+      return;
+    }
+
+    router.push("/");
+  }
 
   return (
     <button
       type="button"
-      onClick={() => router.push("/login")}
+      onClick={handleHeroClick}
       className="group relative isolate overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-8 text-left backdrop-blur-[20px] transition hover:border-[#E249FF] w-full"
     >
       <div
@@ -53,14 +66,20 @@ export function HeroOptionCard({ option }: { option: HeroOption }) {
 
 export function TrendingQuizCard({ quiz }: { quiz: TrendingQuiz }) {
   const router = useRouter();
+  const { data: session } = useSession();
 
   const handleClick = () => {
-    // If the quiz has a shareId, use it; otherwise prompt to log in
     if (quiz.shareId && quiz.shareId.trim().length > 0) {
       router.push(`/quiz/${quiz.shareId}`);
-    } else {
-      router.push("/login");
+      return;
     }
+
+    if (session?.user) {
+      router.push(`/quiz-player?quizId=${quiz.id}`);
+      return;
+    }
+
+    router.push("/login?callbackUrl=/");
   };
 
   return (

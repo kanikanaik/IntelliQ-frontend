@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -14,63 +15,52 @@ import {
   PlusSquare,
   User,
   TrendingUp,
-  Plus,
   LogOut,
-  Flame,
-  Star,
-  Clock,
   ChevronRight,
-  ArrowUp,
 } from "lucide-react";
 import { AmbientBackground } from "@/components/shared/ambient-background";
 import { GlassCard } from "@/components/shared/glass-card";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
-const SUGGESTED_QUIZZES = [
-  {
-    category: "Technology",
-    title: "Quantum Computing Basics",
-    difficulty: "Beginner",
-    questions: 10,
-    participants: "12.4k",
-  },
-  {
-    category: "Pop Culture",
-    title: "Cyberpunk Lore 101",
-    difficulty: "Intermediate",
-    questions: 15,
-    participants: "8.2k",
-  },
-  {
-    category: "Science",
-    title: "Astrophysics Deep Dive",
-    difficulty: "Advanced",
-    questions: 20,
-    participants: "5.6k",
-  },
-];
+type MyQuiz = {
+  id: string;
+  title: string;
+  description: string | null;
+  topic: string | null;
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  isPublished: boolean;
+  shareId: string | null;
+  createdAt: string;
+  _count: {
+    questions: number;
+    attempts: number;
+  };
+};
 
-const RECENT_ACTIVITY = [
-  {
-    title: "Quantum Computing Basics",
-    score: "90%",
-    date: "Today",
-    badge: "🥇",
-  },
-  {
-    title: "History of the Internet",
-    score: "75%",
-    date: "Yesterday",
-    badge: "🥈",
-  },
-  {
-    title: "Neural Networks 101",
-    score: "85%",
-    date: "3 days ago",
-    badge: "🥇",
-  },
-];
+type ExploreQuiz = {
+  id: string;
+  title: string;
+  description: string | null;
+  shareId: string | null;
+  creator: string;
+  isMine?: boolean;
+  questions: number;
+  attempts: number;
+};
+
+const numberFormatter = new Intl.NumberFormat("en-US");
+
+function formatDate(dateIso: string) {
+  const date = new Date(dateIso);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 function UserAvatar({
   name,
   image,
@@ -106,8 +96,106 @@ function UserAvatar({
 export function DashboardScreen() {
   const { data: session } = useSession();
   const router = useRouter();
+  const [myQuizzes, setMyQuizzes] = useState<MyQuiz[]>([]);
+  const [exploreQuizzes, setExploreQuizzes] = useState<ExploreQuiz[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [dataError, setDataError] = useState("");
+
   const user = session?.user;
   const firstName = user?.name?.split(" ")[0] ?? "Creator";
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadDashboardData() {
+      setLoadingData(true);
+      setDataError("");
+      try {
+        const [mineRes, exploreRes] = await Promise.all([
+          fetch("/api/quiz?mine=true", { cache: "no-store" }),
+          fetch("/api/quizzes?limit=6&sort=attempts&includeMine=false", {
+            cache: "no-store",
+          }),
+        ]);
+
+        if (!mineRes.ok) {
+          const payload = (await mineRes.json().catch(() => null)) as {
+            error?: string;
+          } | null;
+          throw new Error(payload?.error || "Failed to load your quizzes");
+        }
+
+        if (!exploreRes.ok) {
+          const payload = (await exploreRes.json().catch(() => null)) as {
+            error?: string;
+          } | null;
+          throw new Error(payload?.error || "Failed to load explore quizzes");
+        }
+
+        const minePayload = (await mineRes.json()) as MyQuiz[];
+        const explorePayload = (await exploreRes.json()) as
+          | { quizzes?: ExploreQuiz[] }
+          | ExploreQuiz[];
+
+        const nextMyQuizzes = Array.isArray(minePayload) ? minePayload : [];
+        const nextExplore = Array.isArray(explorePayload)
+          ? explorePayload
+          : (explorePayload.quizzes ?? []);
+
+        if (!cancelled) {
+          setMyQuizzes(nextMyQuizzes);
+          setExploreQuizzes(nextExplore);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setDataError(
+            error instanceof Error
+              ? error.message
+              : "Failed to load dashboard data",
+          );
+          setMyQuizzes([]);
+          setExploreQuizzes([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingData(false);
+        }
+      }
+    }
+
+    loadDashboardData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const stats = useMemo(() => {
+    const quizzesCreated = myQuizzes.length;
+    const publishedQuizzes = myQuizzes.filter(
+      (quiz) => quiz.isPublished,
+    ).length;
+    const questionsAuthored = myQuizzes.reduce(
+      (sum, quiz) => sum + quiz._count.questions,
+      0,
+    );
+    const totalPlays = myQuizzes.reduce(
+      (sum, quiz) => sum + quiz._count.attempts,
+      0,
+    );
+    const publicationRate =
+      quizzesCreated > 0
+        ? Math.round((publishedQuizzes / quizzesCreated) * 100)
+        : 0;
+
+    return {
+      quizzesCreated,
+      publishedQuizzes,
+      questionsAuthored,
+      totalPlays,
+      publicationRate,
+    };
+  }, [myQuizzes]);
 
   return (
     <div
@@ -160,17 +248,6 @@ export function DashboardScreen() {
               <LogOut className="h-5 w-5" />
             </button>
           </div>
-          <Link
-            href="/create-quiz"
-            className="flex items-center gap-2 rounded-full px-5 py-2 font-['Space_Grotesk'] text-xs font-bold uppercase tracking-[0.15em] text-white transition hover:brightness-110"
-            style={{
-              background: "linear-gradient(90deg, #7030EF, #DB1FFF)",
-              boxShadow: "0 0 20px rgba(219,31,255,0.3)",
-            }}
-          >
-            <Plus className="h-4 w-4" />
-            Create Quiz
-          </Link>
         </div>
       </nav>
 
@@ -196,7 +273,12 @@ export function DashboardScreen() {
                 href: "/dashboard",
                 active: true,
               },
-              { Icon: Wand2, label: "My Quizzes", href: "/", active: false },
+              {
+                Icon: Wand2,
+                label: "My Quizzes",
+                href: "/dashboard#my-quizzes",
+                active: false,
+              },
               {
                 Icon: Brain,
                 label: "AI Generator",
@@ -253,38 +335,44 @@ export function DashboardScreen() {
               👋
             </h1>
             <p className="text-[#CBC3D8] font-['Manrope'] text-base">
-              Here's your activity overview and suggested quizzes.
+              Here is your live creator activity and real-time quiz data.
             </p>
           </div>
+
+          {dataError && (
+            <GlassCard className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+              {dataError}
+            </GlassCard>
+          )}
 
           {/* Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
               {
-                label: "Global Rating",
-                value: "#42",
-                icon: Trophy,
+                label: "Quizzes Created",
+                value: numberFormatter.format(stats.quizzesCreated),
+                icon: Wand2,
                 color: "#DB1FFF",
                 glow: "rgba(219,31,255,0.2)",
               },
               {
-                label: "Quizzes Taken",
-                value: "34",
+                label: "Published",
+                value: numberFormatter.format(stats.publishedQuizzes),
                 icon: Gamepad2,
                 color: "#7030EF",
                 glow: "rgba(112,48,239,0.2)",
               },
               {
-                label: "Total XP",
-                value: "5,230",
-                icon: Star,
+                label: "Questions Authored",
+                value: numberFormatter.format(stats.questionsAuthored),
+                icon: Sparkles,
                 color: "#FBBF24",
                 glow: "rgba(251,191,36,0.2)",
               },
               {
-                label: "Win Streak",
-                value: "7🔥",
-                icon: Flame,
+                label: "Total Plays",
+                value: numberFormatter.format(stats.totalPlays),
+                icon: Trophy,
                 color: "#FB923C",
                 glow: "rgba(251,146,60,0.2)",
               },
@@ -316,7 +404,7 @@ export function DashboardScreen() {
               <div className="flex items-center gap-2 mb-4">
                 <TrendingUp className="h-5 w-5 text-[#DB1FFF]" />
                 <h2 className="font-['Space_Grotesk'] text-lg font-semibold text-white">
-                  Global Rating
+                  Creator Performance
                 </h2>
               </div>
               <div className="text-center py-4">
@@ -324,25 +412,28 @@ export function DashboardScreen() {
                   className="font-['Space_Grotesk'] text-6xl font-black text-white mb-1"
                   style={{ textShadow: "0 0 20px rgba(219,31,255,0.5)" }}
                 >
-                  #42
+                  {stats.publicationRate}%
                 </div>
                 <div className="font-['Space_Grotesk'] text-sm text-[#DB1FFF] uppercase tracking-wider">
-                  World Rank
+                  Publish Rate
                 </div>
-                <div className="mt-4 flex items-center justify-center gap-2 text-green-400 text-sm">
-                  <ArrowUp className="h-4 w-4" />
-                  <span>3 positions this week</span>
+                <div className="mt-4 text-sm text-[#CBC3D8]">
+                  {stats.publishedQuizzes} / {stats.quizzesCreated} quizzes are
+                  currently published
                 </div>
               </div>
               <div className="mt-4 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-[#CBC3D8]">Win rate</span>
-                  <span className="text-white font-semibold">78%</span>
+                  <span className="text-[#CBC3D8]">Publication progress</span>
+                  <span className="text-white font-semibold">
+                    {stats.publicationRate}%
+                  </span>
                 </div>
                 <div className="h-2 rounded-full bg-white/10">
                   <div
-                    className="h-full rounded-full w-[78%]"
+                    className="h-full rounded-full"
                     style={{
+                      width: `${stats.publicationRate}%`,
                       background: "linear-gradient(to right, #7030EF, #DB1FFF)",
                     }}
                   />
@@ -374,7 +465,7 @@ export function DashboardScreen() {
                   </div>
                 </GlassCard>
               </Link>
-              <Link href="/login" className="group">
+              <Link href="/dashboard#explore-quizzes" className="group">
                 <GlassCard className="h-full rounded-xl p-6 transition hover:border-[#DB1FFF] cursor-pointer">
                   <div
                     className="mb-4 h-12 w-12 rounded-full flex items-center justify-center"
@@ -421,12 +512,12 @@ export function DashboardScreen() {
             </div>
           </div>
 
-          {/* Suggested Quizzes */}
-          <div className="mb-8">
+          {/* Explore Quizzes */}
+          <div id="explore-quizzes" className="mb-8 scroll-mt-28">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-['Space_Grotesk'] text-2xl font-semibold text-white flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-[#DB1FFF]" />
-                Suggested for You
+                Explore Quizzes
               </h2>
               <Link
                 href="/"
@@ -435,84 +526,146 @@ export function DashboardScreen() {
                 View All
               </Link>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {SUGGESTED_QUIZZES.map((quiz) => (
-                <Link key={quiz.title} href="/quiz-player">
-                  <GlassCard className="rounded-xl p-5 hover:border-[#F8ACFF] transition-colors group cursor-pointer">
-                    <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-[#7030EF] to-[#E249FF] opacity-60 group-hover:opacity-100 transition-opacity rounded-t-xl" />
-                    <div className="flex items-start justify-between mb-3">
-                      <span className="rounded-full border border-[#7030EF] bg-[#7030EF]/10 px-2.5 py-0.5 font-['Space_Grotesk'] text-[10px] font-semibold uppercase tracking-widest text-[#CFBCFF]">
-                        {quiz.category}
-                      </span>
-                      <span className="text-xs text-[#CBC3D8] font-['Space_Grotesk']">
-                        {quiz.questions}Q
-                      </span>
-                    </div>
-                    <h3 className="font-['Space_Grotesk'] text-base font-semibold text-white mb-1 group-hover:text-[#F8ACFF] transition-colors">
-                      {quiz.title}
-                    </h3>
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="text-xs text-[#CBC3D8]">
-                        {quiz.participants} participants
-                      </span>
-                      <span
-                        className="text-[10px] font-['Space_Grotesk'] px-2 py-0.5 rounded-full"
-                        style={{
-                          background:
-                            quiz.difficulty === "Beginner"
-                              ? "rgba(74,222,128,0.1)"
-                              : quiz.difficulty === "Intermediate"
-                                ? "rgba(251,191,36,0.1)"
-                                : "rgba(219,31,255,0.1)",
-                          color:
-                            quiz.difficulty === "Beginner"
-                              ? "#4ADE80"
-                              : quiz.difficulty === "Intermediate"
-                                ? "#FBBF24"
-                                : "#DB1FFF",
-                          border: `1px solid ${quiz.difficulty === "Beginner" ? "rgba(74,222,128,0.3)" : quiz.difficulty === "Intermediate" ? "rgba(251,191,36,0.3)" : "rgba(219,31,255,0.3)"}`,
-                        }}
-                      >
-                        {quiz.difficulty}
-                      </span>
-                    </div>
+
+            {loadingData && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[1, 2, 3].map((idx) => (
+                  <GlassCard key={idx} className="rounded-xl p-5 animate-pulse">
+                    <div className="h-4 w-24 rounded bg-white/10 mb-3" />
+                    <div className="h-5 w-2/3 rounded bg-white/10 mb-3" />
+                    <div className="h-4 w-full rounded bg-white/10 mb-1" />
+                    <div className="h-4 w-5/6 rounded bg-white/10" />
                   </GlassCard>
-                </Link>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
+
+            {!loadingData && exploreQuizzes.length === 0 && (
+              <GlassCard className="rounded-xl p-6 text-center text-[#CBC3D8]">
+                No published quizzes are available to explore yet.
+              </GlassCard>
+            )}
+
+            {!loadingData && exploreQuizzes.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {exploreQuizzes.map((quiz) => {
+                  const playHref = quiz.shareId
+                    ? `/quiz/${quiz.shareId}`
+                    : `/quiz-player?quizId=${quiz.id}`;
+
+                  return (
+                    <Link key={quiz.id} href={playHref}>
+                      <GlassCard className="rounded-xl p-5 hover:border-[#F8ACFF] transition-colors group cursor-pointer h-full">
+                        <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-[#7030EF] to-[#E249FF] opacity-60 group-hover:opacity-100 transition-opacity rounded-t-xl" />
+                        <div className="flex items-start justify-between mb-3">
+                          <span className="rounded-full border border-[#7030EF] bg-[#7030EF]/10 px-2.5 py-0.5 font-['Space_Grotesk'] text-[10px] font-semibold uppercase tracking-widest text-[#CFBCFF]">
+                            {quiz.questions} Questions
+                          </span>
+                          <span className="text-xs text-[#CBC3D8] font-['Space_Grotesk']">
+                            {numberFormatter.format(quiz.attempts)} plays
+                          </span>
+                        </div>
+                        <h3 className="font-['Space_Grotesk'] text-base font-semibold text-white mb-1 group-hover:text-[#F8ACFF] transition-colors">
+                          {quiz.title}
+                        </h3>
+                        <p className="text-xs text-[#CBC3D8] line-clamp-3 min-h-12">
+                          {quiz.description || "No description provided."}
+                        </p>
+                        <div className="mt-3 text-[11px] text-[#A89FB9]">
+                          by {quiz.creator}
+                        </div>
+                      </GlassCard>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* Recent Activity */}
-          <div>
+          {/* My Quizzes */}
+          <div id="my-quizzes" className="scroll-mt-28">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-['Space_Grotesk'] text-2xl font-semibold text-white flex items-center gap-2">
-                <Clock className="h-5 w-5 text-[#CFBCFF]" />
-                Recent Activity
+                <Wand2 className="h-5 w-5 text-[#CFBCFF]" />
+                My Quizzes
               </h2>
+              <Link
+                href="/create-quiz"
+                className="font-['Space_Grotesk'] text-xs font-semibold uppercase tracking-widest text-[#CFBCFF] hover:text-[#F8ACFF] transition-colors"
+              >
+                Create New
+              </Link>
             </div>
             <GlassCard className="rounded-xl overflow-hidden">
-              {RECENT_ACTIVITY.map((item, i) => (
-                <div
-                  key={i}
-                  className={`flex items-center gap-4 p-4 hover:bg-white/5 transition-colors ${i < RECENT_ACTIVITY.length - 1 ? "border-b border-white/10" : ""}`}
-                >
-                  <span className="text-2xl">{item.badge}</span>
-                  <div className="flex-1">
-                    <h4 className="font-['Space_Grotesk'] text-sm font-semibold text-white">
-                      {item.title}
-                    </h4>
-                    <span className="text-xs text-[#CBC3D8]">{item.date}</span>
-                  </div>
+              {loadingData &&
+                [1, 2, 3].map((idx) => (
                   <div
-                    className="font-['Space_Grotesk'] text-lg font-bold"
+                    key={idx}
+                    className={`p-4 ${idx < 3 ? "border-b border-white/10" : ""}`}
+                  >
+                    <div className="h-4 w-1/3 rounded bg-white/10 mb-2 animate-pulse" />
+                    <div className="h-3 w-2/3 rounded bg-white/10 animate-pulse" />
+                  </div>
+                ))}
+
+              {!loadingData && myQuizzes.length === 0 && (
+                <div className="p-6 text-center">
+                  <p className="text-sm text-[#CBC3D8] mb-3">
+                    You have not created any quizzes yet.
+                  </p>
+                  <Link
+                    href="/create-quiz"
+                    className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.15em] text-white"
                     style={{
-                      color: parseInt(item.score) >= 85 ? "#4ADE80" : "#FBBF24",
+                      background: "linear-gradient(90deg, #7030EF, #DB1FFF)",
                     }}
                   >
-                    {item.score}
-                  </div>
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Create Your First Quiz
+                  </Link>
                 </div>
-              ))}
+              )}
+
+              {!loadingData &&
+                myQuizzes.map((quiz, index) => (
+                  <div
+                    key={quiz.id}
+                    className={`flex items-center gap-4 p-4 hover:bg-white/5 transition-colors ${index < myQuizzes.length - 1 ? "border-b border-white/10" : ""}`}
+                  >
+                    <span
+                      className={`text-[10px] uppercase tracking-widest px-2 py-1 rounded-full border font-['Space_Grotesk'] font-semibold ${quiz.isPublished ? "text-green-300 border-green-400/40 bg-green-500/10" : "text-amber-300 border-amber-400/40 bg-amber-500/10"}`}
+                    >
+                      {quiz.isPublished ? "Published" : "Draft"}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-['Space_Grotesk'] text-sm font-semibold text-white truncate">
+                        {quiz.title}
+                      </h4>
+                      <div className="text-xs text-[#CBC3D8] mt-0.5 flex flex-wrap gap-x-3 gap-y-1">
+                        <span>{quiz._count.questions} questions</span>
+                        <span>
+                          {numberFormatter.format(quiz._count.attempts)} plays
+                        </span>
+                        <span>Created {formatDate(quiz.createdAt)}</span>
+                      </div>
+                    </div>
+                    {quiz.isPublished && quiz.shareId ? (
+                      <Link
+                        href={`/quiz/${quiz.shareId}`}
+                        className="text-xs font-['Space_Grotesk'] uppercase tracking-wider text-[#CFBCFF] hover:text-[#F8ACFF]"
+                      >
+                        Open
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/create-quiz"
+                        className="text-xs font-['Space_Grotesk'] uppercase tracking-wider text-[#CFBCFF] hover:text-[#F8ACFF]"
+                      >
+                        Edit
+                      </Link>
+                    )}
+                  </div>
+                ))}
             </GlassCard>
           </div>
         </main>

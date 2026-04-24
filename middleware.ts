@@ -25,13 +25,18 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Check session cookie (lightweight — no DB call)
+  const session = getSessionCookie(request);
+
+  // Logged-in users should not land on auth pages
+  if (session && (pathname === "/login" || pathname === "/signup")) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
   // Exact public paths — skip
   if (PUBLIC_PATHS.has(pathname)) {
     return NextResponse.next();
   }
-
-  // Check session cookie (lightweight — no DB call)
-  const session = getSessionCookie(request);
 
   if (!session) {
     const loginUrl = new URL("/login", request.url);

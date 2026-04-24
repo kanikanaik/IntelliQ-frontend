@@ -45,7 +45,7 @@ export function TrendingSection() {
           | { quizzes?: TrendingQuiz[] }
           | TrendingQuiz[];
 
-        const payload = Array.isArray(data) ? data : data.quizzes ?? [];
+        const payload = Array.isArray(data) ? data : (data.quizzes ?? []);
         setQuizzes(payload);
         console.info("[landing] trending quizzes loaded", {
           count: payload.length,

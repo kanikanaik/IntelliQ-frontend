@@ -11,6 +11,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
     const offset = parseInt(searchParams.get("offset") || "0");
+    const includeMine = searchParams.get("includeMine") !== "false";
     const requestedSort = searchParams.get("sort") || "recent";
     const sort: SortMode =
       requestedSort === "attempts" || requestedSort === "trending"
@@ -35,13 +36,13 @@ export async function GET(request: Request) {
       where: {
         isPublished: true,
         shareId: { not: null },
-        // Exclude quizzes created by current user (if logged in)
-        ...(userId && { createdBy: { not: userId } }),
+        ...(userId && !includeMine ? { createdBy: { not: userId } } : {}),
       },
       select: {
         id: true,
         title: true,
         description: true,
+        createdBy: true,
         shareId: true,
         creator: { select: { name: true, image: true } },
         _count: { select: { questions: true, attempts: true } },
@@ -58,6 +59,7 @@ export async function GET(request: Request) {
       description: quiz.description,
       shareId: quiz.shareId,
       creator: quiz.creator.name || "Anonymous",
+      isMine: userId ? quiz.createdBy === userId : false,
       questions: quiz._count.questions,
       attempts: quiz._count.attempts,
     }));
